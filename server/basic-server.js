@@ -1,75 +1,75 @@
 /* Import node modules: */
-var cors        = require('cors'),
+var http        = require("http"),
+    urlParse    = require("url"),
+    cors        = require('cors'),
     bodyParser  = require('body-parser'),
     express     = require('express'),
     fs          = require('fs'),
-    http        = require("http"),
     multer      = require("multer"),
     path        = require("path"),
-    request     = require("request"),
-    url         = require("url");
+    request     = require("request");
 
-var handler = require('./request-handler.js');
+var handleRequest = require('./request-handler');
 
-var app = express();
-app.set('trust proxy', 'loopback'); // specify a single subnet
+// var app = express();
+// app.set('trust proxy', 'loopback'); // specify a single subnet
 
-var messages = [];
+// var messages = [];
 
-app.use(cors());
-app.use( bodyParser.urlencoded({ extended:true }) );    // to support URL-encoded bodies
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
-// app.use(multer()); // for parsing multipart/form-data
+// app.use(cors());
+// app.use( bodyParser.urlencoded({ extended:true }) );    // to support URL-encoded bodies
+// app.use( bodyParser.json() );       // to support JSON-encoded bodies
+// // app.use(multer()); // for parsing multipart/form-data
 
-app.route('/')
-  .get(function(req, res) {
-    var content = '';
-    var fileName = 'index.html'; // could also return req.url for specific url
-    var localFile = __dirname + '/public/'; // where public files are located
-    // NOTE: __dirname returns the root folder for this js file
-    content = localFile + fileName; //setup the file name to be returned
+// app.route('/')
+//   .get(function(req, res) {
+//     var content = '';
+//     var fileName = 'index.html'; // could also return req.url for specific url
+//     var localFile = __dirname + '/public/'; // where public files are located
+//     // NOTE: __dirname returns the root folder for this js file
+//     content = localFile + fileName; //setup the file name to be returned
 
-    if (fileName === "index.html") {
-      //reads the file referenced by 'content'
-      fs.readFile(content, function(err,contents) {
-        //if the fileRead was successful...
-        if(!err) {
-          //send the contents of index.html
-          //and then close the request
-          res.end(contents);
-        } else {
-          //otherwise, let us inspect the eror
-          //in the console
-          console.dir(err);
-        }
-    });
-    } else {
-      //if the file was not found, set a 404 header...
-      res.writeHead(404, {'Content-Type': 'text/html'});
-      //send a custom 'file not found' message and then close the request
-      res.end('<h1>Sorry, the page you are looking for cannot be found.</h1>');
-    }
-  });
+//     if (fileName === "index.html") {
+//       //reads the file referenced by 'content'
+//       fs.readFile(content, function(err,contents) {
+//         //if the fileRead was successful...
+//         if(!err) {
+//           //send the contents of index.html
+//           //and then close the request
+//           res.end(contents);
+//         } else {
+//           //otherwise, let us inspect the eror
+//           //in the console
+//           console.dir(err);
+//         }
+//     });
+//     } else {
+//       //if the file was not found, set a 404 header...
+//       res.writeHead(404, {'Content-Type': 'text/html'});
+//       //send a custom 'file not found' message and then close the request
+//       res.end('<h1>Sorry, the page you are looking for cannot be found.</h1>');
+//     }
+//   });
 
-app.route('/classes/messages')
-  .get(function(req, res) {
-    res.status(200).json( {"results": messages} );
-  })
-  .post(function(req, res) {
-    console.dir(req.body);
-    messages.push(req.body);
-    res.status(201).json( {"results": messages} );
-  });
+// app.route('/classes/messages')
+//   .get(function(req, res) {
+//     res.status(200).json( {"results": messages} );
+//   })
+//   .post(function(req, res) {
+//     console.dir(req.body);
+//     messages.push(req.body);
+//     res.status(201).json( {"results": messages} );
+//   });
 
-app.route(/^classes\/[\\w\\W]+/)
-  .get(function(req, res) {
-    res.status(200).json( {"results": messages} );
-  })
-  .post(function(req, res) {
-    console.dir(req.body);
-    messages.push(req.body);
-    res.status(201).json( {"results": messages} );
-  });
+// app.route(/^classes\/[\\w\\W]+/)
+//   .get(function(req, res) {
+//     res.status(200).json( {"results": messages} );
+//   })
+//   .post(function(req, res) {
+//     console.dir(req.body);
+//     messages.push(req.body);
+//     res.status(201).json( {"results": messages} );
+//   });
 
 // Every server needs to listen on a port with a unique number. The
 // standard port for HTTP servers is port 80, but that port is
@@ -89,10 +89,27 @@ var ip = "127.0.0.1";
 // incoming requests.
 //
 // After creating the server, we will tell it to listen on the given port and IP. */
-// var server = http.createServer(handler.requestHandler);
-var server = http.createServer(app);
+
+var routes = {
+  'classes/chatterbox': handleRequest
+};
+
+var server = http.createServer(function(request, response) {
+  // console.log("Serving request type " + request.method + " for url " + request.url);
+
+  var parts = urlParse.parse(request.url);
+
+  var route = routes[parts.pathname];
+  if (route) {
+    route(request, response);
+  } else {
+    utils.sendResponse(request, "Not Found", 404);
+  }
+
+});
+// var server = http.createServer(app);
 server.listen(port, ip);
-console.log("Listening on http://" + ip + ":" + port);
+// console.log("Listening on http://" + ip + ":" + port);
 
 // To start this server, run:
 //
