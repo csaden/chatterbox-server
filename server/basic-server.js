@@ -1,6 +1,34 @@
 /* Import node's http module: */
+// var handler = require('./request-handler.js');
+var cors = require('cors');
+var bodyParser = require('body-parser');
+var express = require('express');
 var http = require("http");
-var handler = require('./request-handler.js');
+var request = require("request");
+var url = require("url");
+
+var app = express();
+
+app.use(cors());
+app.use( bodyParser.urlencoded({ extended:true }) );    // to support URL-encoded bodies
+app.use( bodyParser.json() );       // to support JSON-encoded bodies
+
+app.get('/classes/messages', function(req, res){
+  res.status(200).json( {"results": []} );
+});
+
+app.post('/classes/messages', function(req, res) {
+  console.log(req.body);
+  res.status(201).json( {"results": []} );
+});
+
+app.get('/classes/room1', function(req, res) {
+ res.status(200).json( {"results": []} );
+});
+
+app.post('/classes/room1', function(req, res) {
+  res.status(201).json( {"results": []} );
+});
 
 // Every server needs to listen on a port with a unique number. The
 // standard port for HTTP servers is port 80, but that port is
@@ -20,7 +48,8 @@ var ip = "127.0.0.1";
 // incoming requests.
 //
 // After creating the server, we will tell it to listen on the given port and IP. */
-var server = http.createServer(handler.requestHandler);
+// var server = http.createServer(handler.requestHandler);
+var server = http.createServer(app);
 server.listen(port, ip);  
 console.log("Listening on http://" + ip + ":" + port);
 

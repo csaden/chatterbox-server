@@ -11,6 +11,7 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var qs = require("querystring");
 
 var response_obj = [];
 
@@ -59,14 +60,28 @@ var requestHandler = function(request, response) {
     var headers = defaultCorsHeaders;
     headers['Content-Type'] = "application/json";
     response.end('{"results":' + JSON.stringify(response_obj) + '}');
-  } else {
+  } else if (request.url === "/classes/messages" && request.method === "POST") {
+    var statusCode = 201;
+    var headers = defaultCorsHeaders;
+    headers['Content-Type'] = "plain/text";
+    var requestBody = '';
+    request.on('data', function(data){
+      requestBody += data; 
+    }); 
+    request.on('end', function(){
+      var data = qs.parse(requestBody);
+      response.end(data);
+    });
+  }
+
+  else {
     statusCode = 404;
     var headers = defaultCorsHeaders;
     headers['Content-Type'] = 'plain/text';
     response.end('Sorry, this page does not exist!');
   }
 
-
+  
 
   //response.end("results");
 
