@@ -22,4 +22,3 @@ exports.collectData = function(request, callback) {
     callback(JSON.parse(data));
   });
 };
-
